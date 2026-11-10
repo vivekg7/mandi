@@ -1,0 +1,60 @@
+# Fetches the data.gov.in mandi dataset and publishes compact JSON to the `data`
+# branch, which the app downloads from raw.githubusercontent.com.
+#
+# Needs the repository secret DATA_GOV_IN_API_KEY (see README, "Data pipeline").
+name: Update prices
+
+on:
+  schedule:
+    # Markets report through the day and the upstream dataset is refreshed
+    # several times, so poll during Indian working hours:
+    # 10:30, 13:30, 16:30 and 19:30 IST (IST = UTC+5:30).
+    - cron: "0 5,8,11,14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two runs writing the data branch at once would race on the force-push.
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test the pipeline
+        run: python3 -m unittest discover -s pipeline -v
+
+      - name: Fetch the previous output
+        run: |
+          # The previous run's files are merged with today's fetch (history, and
+          # series that have not reported yet today). First run: start empty.
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch --depth 1 origin data
+            mkdir out && git archive FETCH_HEAD | tar -x -C out
+          else
+            mkdir out
+          fi
+
+      - name: Fetch and normalise prices
+        env:
+          DATA_GOV_IN_API_KEY: ${{ secrets.DATA_GOV_IN_API_KEY }}
+        run: python3 pipeline/fetch_mandi.py --out out
+
+      - name: Publish to the data branch
+        run: |
+          cp pipeline/DATA_BRANCH_README.md out/README.md
+          cd out
+          # A single orphan commit, force-pushed: history lives inside the JSON
+          # files, so keeping every run's commit would only grow the clone.
+          git init -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898798+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Prices as of $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
