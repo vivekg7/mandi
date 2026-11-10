@@ -1,0 +1,4 @@
+<resources>
+    <!-- Only the window behind Compose: keeps the launch frame light or dark to match. -->
+    <style name="Theme.Mandi" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
