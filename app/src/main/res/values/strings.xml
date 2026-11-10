@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mandi</string>
+
+    <string name="back">Back</string>
+    <string name="search">Search commodity</string>
+    <string name="refresh">Refresh</string>
+    <string name="clear">Clear</string>
+    <string name="retry">Try again</string>
+    <string name="loading">Loading…</string>
+    <string name="browse_markets">Browse markets</string>
+
+    <string name="updated_status">Prices updated %1$s</string>
+    <string name="offline_status">Offline · showing saved prices from %1$s</string>
+    <string name="load_failed">Could not load prices. Check your connection and try again.</string>
+    <string name="no_favourites">Star a commodity at a market to see its price here every day.</string>
+    <string name="no_recent_report">No report in the last 7 days</string>
+    <string name="unit_note">Prices are in rupees per quintal (100 kg) as reported by each market to Agmarknet, published on data.gov.in. Modal is the price most trade happened at.</string>
+
+    <string name="choose_state">Choose state</string>
+    <string name="search_title">Search</string>
+    <string name="search_hint">Commodity, e.g. Onion or प्याज</string>
+    <string name="no_results">No market reported this commodity in the last 7 days.</string>
+
+    <string name="per_quintal">%1$s/qtl</string>
+    <string name="per_kg">%1$s/kg</string>
+    <string name="market_line">%1$s, %2$s</string>
+    <string name="place_line">%1$s, %2$s, %3$s</string>
+    <string name="range_line">Min %1$s · Max %2$s per quintal</string>
+    <string name="modal_price">Modal price</string>
+    <string name="arrival_date_line">Arrival date: %1$s</string>
+    <string name="previous_line">Previous report %1$s: %2$s/qtl</string>
+
+    <string name="arrival_today">Reported today</string>
+    <string name="arrival_yesterday">Reported yesterday</string>
+    <plurals name="arrival_days_old">
+        <item quantity="one">Reported %1$s · %2$d day old</item>
+        <item quantity="other">Reported %1$s · %2$d days old</item>
+    </plurals>
+
+    <string name="change_up">Up</string>
+    <string name="change_down">Down</string>
+    <string name="change_none">No change</string>
+    <string name="change_unknown">No earlier price</string>
+
+    <string name="add_favourite">Add to home screen</string>
+    <string name="remove_favourite">Remove from home screen</string>
+
+    <string name="trend_title">Last 30 days</string>
+    <string name="trend_description">Modal price trend</string>
+    <string name="trend_not_enough">Not enough reports yet to draw a trend.</string>
+    <string name="trend_range">Low %1$s · High %2$s per quintal</string>
+    <plurals name="reported_days">
+        <item quantity="one">Reported on %1$d day</item>
+        <item quantity="other">Reported on %1$d days</item>
+    </plurals>
+
+    <string name="variety">Variety</string>
+    <string name="grade">Grade</string>
+    <string name="market">Market</string>
+    <string name="district">District</string>
+    <string name="state">State</string>
+
+    <plurals name="market_count">
+        <item quantity="one">%1$d market</item>
+        <item quantity="other">%1$d markets</item>
+    </plurals>
+    <plurals name="commodity_count">
+        <item quantity="one">%1$d commodity</item>
+        <item quantity="other">%1$d commodities</item>
+    </plurals>
+</resources>
