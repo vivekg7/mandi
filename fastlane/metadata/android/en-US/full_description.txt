@@ -1,0 +1,19 @@
+Daily wholesale (APMC mandi) crop prices from markets across India, from the government's open data on data.gov.in (Agmarknet).
+
+<b>Features</b>
+<ul>
+<li>Browse by state, district and market, with min, max and modal price for every commodity the market reported</li>
+<li>Search a commodity across all markets in India, in English or Hindi</li>
+<li>Favourites on the home screen with today's price and the change since the previous report</li>
+<li>Price per quintal and per kg</li>
+<li>30-day trend line</li>
+<li>Arrival date always shown, and highlighted when a market has not reported for two days or more</li>
+<li>Works offline with the last downloaded prices</li>
+<li>Hindi names for common commodities</li>
+<li>Material You colours and dark theme</li>
+</ul>
+
+<b>Privacy</b>
+No ads, no analytics, no tracking, no account. The only network access is downloading the published price files from GitHub. Your favourites stay on your device.
+
+Prices are updated four times a day by an open-source GitHub Actions workflow that reads the data.gov.in API, so the app itself needs no API key.

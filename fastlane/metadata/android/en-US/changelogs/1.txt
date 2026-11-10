@@ -1,0 +1,1 @@
+First release: browse markets by state and district, all-India commodity search, favourites with daily change, per-quintal and per-kg prices, 30-day trend, offline cache.
