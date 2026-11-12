@@ -2,9 +2,10 @@
 """Fetch the data.gov.in mandi price dataset and publish compact JSON for the app.
 
 The app cannot call data.gov.in itself: the API needs a key, and a key shipped
-inside an open-source APK is a published key. So this script runs in GitHub
-Actions with the key from a repository secret, and writes plain JSON files that
-the app downloads from the repository's ``data`` branch.
+inside an open-source APK is a published key. So this script runs from cron on a
+host in India (``publish.sh``; data.gov.in refuses GitHub's runners) with the key
+from the environment, and writes plain JSON files that the app downloads from the
+repository's ``data`` branch.
 
 Output layout (all inside ``--out``)::
 
@@ -20,7 +21,7 @@ files the previous run published: a series that did not report today keeps its
 last price for up to LATEST_MAX_AGE_DAYS (the app shows its arrival date), and
 history accumulates day by day.
 
-Standard library only, so the workflow needs no ``pip install`` step.
+Standard library only, so the host needs no ``pip install`` step.
 """
 
 from __future__ import annotations

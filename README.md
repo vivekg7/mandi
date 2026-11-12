@@ -33,7 +33,7 @@ open source (MIT), and has **no ads, no tracking, no analytics and no account**.
 ## How the data gets to the app
 
 ```
-data.gov.in API ──(GitHub Actions, API key in a repo secret)──▶ data branch ──(raw.githubusercontent.com)──▶ app
+data.gov.in API ──(cron on a host in India, pipeline/publish.sh)──▶ data branch ──(raw.githubusercontent.com)──▶ app
 ```
 
 The source is the dataset _Current Daily Price of Various Commodities from Various
@@ -42,8 +42,9 @@ Its API needs a personal key, and a key built into an open-source APK is a publi
 key that anyone could copy and get rate-limited or revoked. So the app never
 talks to data.gov.in:
 
-- `.github/workflows/update-prices.yml` runs four times a day, at 10:30, 13:30,
-  16:30 and 19:30 IST, when markets report.
+- `pipeline/publish.sh` runs from cron four times a day, at 10:30, 13:30, 16:30
+  and 19:30 IST, when markets report. It runs the pipeline's tests, fetches the
+  previous output from the `data` branch, runs the fetch and pushes the result.
 - `pipeline/fetch_mandi.py` (Python standard library only) pages through the whole
   dataset and normalises names, dates and prices. It merges the result with the
   previous run's files and writes compact JSON: an index, one file per state, and
@@ -52,6 +53,13 @@ talks to data.gov.in:
 - The output is force-pushed as a single commit to the `data` branch. History
   lives inside the files, so keeping a commit per run would only make the
   repository grow forever.
+
+**Why not GitHub Actions:** api.data.gov.in refuses connections from GitHub's
+runners, which run outside India (connection refused, then timeouts, on every
+attempt), while the same request from an Indian connection answers at once. So
+the fetch runs from cron on an always-on Linux machine in India, and Actions only
+runs the pipeline's unit tests (`.github/workflows/test-pipeline.yml`). Any
+Linux host in India with Python 3.11+ and git works the same way.
 
 **Why raw.githubusercontent.com and not GitHub Pages:** it serves any branch of a
 public repository with no Pages setup, it supports gzip, and its five-minute cache
@@ -66,26 +74,40 @@ mistaken for today's.
 
 **Why history starts empty:** data.gov.in serves only the current day, so the
 pipeline builds history itself, run by run. Trend lines fill in over the first
-month after the workflow starts running.
+month after the pipeline starts running.
 
 ### Setting up the data pipeline (one-time, by hand)
-
-The workflow cannot run until the API key is added:
 
 1. Register at <https://data.gov.in> (top right, **Login / Register**). You can
    sign up with an email address and an OTP.
 2. Once signed in, open **My Account** (your name, top right). Your API key is
    shown there; generate one if it is empty. It is a long hexadecimal string.
-3. In this repository on GitHub: **Settings → Secrets and variables → Actions →
-   New repository secret**. Name it `DATA_GOV_IN_API_KEY` and paste the key as its
-   value. Or, from a clone: `gh secret set DATA_GOV_IN_API_KEY --repo vivekg7/mandi`.
-4. Run the workflow once by hand: **Actions → Update prices → Run workflow**, or
-   `gh workflow run update-prices.yml --repo vivekg7/mandi`. It creates the `data`
-   branch. After that, the schedule takes over.
-5. Check that <https://raw.githubusercontent.com/vivekg7/mandi/data/index.json>
-   lists the states.
+3. On the host (Linux, in India), create a deploy key and give it write access to
+   this repository only:
+   ```sh
+   ssh-keygen -t ed25519 -N "" -C "mandi data push" -f ~/.ssh/mandi_deploy
+   gh repo deploy-key add ~/.ssh/mandi_deploy.pub --repo vivekg7/mandi \
+     --allow-write --title "mandi data push"   # from any machine with gh
+   ```
+4. Clone with that key and store the API key where only you can read it:
+   ```sh
+   export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/mandi_deploy -o IdentitiesOnly=yes"
+   git clone git@github.com:vivekg7/mandi.git ~/Developer/mandi
+   mkdir -p ~/.config/mandi && chmod 700 ~/.config/mandi
+   read -rs -p "API key: " k && printf 'DATA_GOV_IN_API_KEY=%s\n' "$k" > ~/.config/mandi/env
+   chmod 600 ~/.config/mandi/env
+   ```
+5. Add a cron entry (`crontab -e`; the times assume the host's clock is IST). It
+   pulls `main` first, so pipeline changes reach the host without logging in:
+   ```cron
+   30 10,13,16,19 * * * cd $HOME/Developer/mandi && set -a && . $HOME/.config/mandi/env && set +a && export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/mandi_deploy -o IdentitiesOnly=yes" && git pull -q --ff-only && pipeline/publish.sh >> $HOME/mandi-data.log 2>&1
+   ```
+6. Run the same command once by hand to create the `data` branch, then check that
+   <https://raw.githubusercontent.com/vivekg7/mandi/data/index.json> lists the
+   states.
 
-Until step 4 has run, the app shows "Could not load prices".
+Until step 6 has run, the app shows "Could not load prices". If the host is down,
+the app keeps showing the last published prices with their arrival dates.
 
 To run the pipeline locally:
 

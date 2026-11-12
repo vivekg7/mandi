@@ -12,7 +12,7 @@ sees the usual request metadata, such as your IP address, under
 [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 
 The app never contacts data.gov.in or any other server. The government data is
-fetched by a GitHub Actions workflow, not by your phone.
+fetched by a scheduled job on the developer's own server, not by your phone.
 
 ## On your device
 

@@ -1,6 +1,6 @@
 # Published data format
 
-The `Update prices` workflow writes these files to the `data` branch. The app
+`pipeline/publish.sh` (run from cron) writes these files to the `data` branch. The app
 reads them from
 `https://raw.githubusercontent.com/vivekg7/mandi/data/<path>`. The producer is
 `pipeline/fetch_mandi.py`; the consumer is

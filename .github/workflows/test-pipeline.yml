@@ -1,0 +1,21 @@
+# Runs the price pipeline's unit tests. The pipeline itself does not run here:
+# api.data.gov.in refuses connections from GitHub's runners, so it runs from cron
+# on a host in India (see README, "How the data gets to the app").
+name: Test pipeline
+
+on:
+  push:
+    paths: ["pipeline/**", ".github/workflows/test-pipeline.yml"]
+  pull_request:
+    paths: ["pipeline/**", ".github/workflows/test-pipeline.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m unittest discover -s pipeline -v

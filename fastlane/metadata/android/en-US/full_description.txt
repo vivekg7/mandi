@@ -16,4 +16,4 @@ Daily wholesale (APMC mandi) crop prices from markets across India, from the gov
 <b>Privacy</b>
 No ads, no analytics, no tracking, no account. The only network access is downloading the published price files from GitHub. Your favourites stay on your device.
 
-Prices are updated four times a day by an open-source GitHub Actions workflow that reads the data.gov.in API, so the app itself needs no API key.
+Prices are updated four times a day by an open-source scheduled job that reads the data.gov.in API, so the app itself needs no API key.
