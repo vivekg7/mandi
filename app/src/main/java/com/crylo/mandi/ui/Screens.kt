@@ -100,7 +100,9 @@ private fun HomeScreen(vm: MandiViewModel) {
         },
     ) { padding ->
         PullToRefreshBox(
-            isRefreshing = vm.refreshing,
+            // Before the first index arrives the centred spinner below already says
+            // "loading"; a second, pull-to-refresh spinner on top of it is noise.
+            isRefreshing = vm.refreshing && vm.index != null,
             onRefresh = vm::refresh,
             modifier = Modifier.fillMaxSize().padding(padding),
         ) {
