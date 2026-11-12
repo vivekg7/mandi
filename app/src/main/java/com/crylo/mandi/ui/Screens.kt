@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import com.crylo.mandi.R
 import com.crylo.mandi.core.Money
+import com.crylo.mandi.core.PriceRow
 import com.crylo.mandi.core.SeriesKey
 
 @Composable
@@ -339,7 +341,14 @@ private fun SearchScreen(vm: MandiViewModel) {
             // state, so new rows usually land above the first visible one. A keyed list
             // holds that row in place, which opened the results mid-list with no hint that
             // anything sat above. Stay pinned to the top unless the user has scrolled away.
-            remember(results) { if (atTop) listState.requestScrollToItem(0) }
+            val pinnedFor = remember { PinnedResults() }
+            SideEffect {
+                // After composition, before this frame's layout applies the new rows.
+                if (pinnedFor.results !== results) {
+                    pinnedFor.results = results
+                    if (atTop) listState.requestScrollToItem(0)
+                }
+            }
             LaunchedEffect(vm.query) { listState.scrollToItem(0) }
             LazyColumn(Modifier.fillMaxSize(), state = listState) {
                 if (vm.query.trim().length >= 2 && results.isEmpty() && !vm.searchLoading) {
@@ -352,6 +361,11 @@ private fun SearchScreen(vm: MandiViewModel) {
             }
         }
     }
+}
+
+/** The result list the search screen last kept at the top; not state, just a marker. */
+private class PinnedResults {
+    var results: List<PriceRow>? = null
 }
 
 @Composable
