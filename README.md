@@ -138,9 +138,24 @@ For a signed release, create `keystore.properties` (git-ignored) next to
 ## Releasing on Google Play
 
 ```sh
-./gradlew lintRelease testDebugUnitTest bundleRelease
-# app/build/outputs/bundle/release/app-release.aab
+./gradlew lintRelease testDebugUnitTest
+./scripts/archive-apk.sh            # build, verify, archive
+./scripts/archive-apk.sh --force    # replace an existing archive
 ```
+
+`scripts/archive-apk.sh` builds the release APK and AAB and copies them into
+`local/releases/v<version>/` as `mandi-v<version>.apk` and `.aab`, each with a
+`.sha256`, plus the R8 `mapping.txt` that turns a minified stack trace from that
+build back into names. Upload the `.aab` to Play; the `.apk` is for sideloading.
+The version is read from the built APK, so the name cannot disagree with what
+shipped.
+
+The script is not wired into `assembleRelease`, so a build made while working
+cannot overwrite an archived release. It refuses an unsigned APK, and a bundle
+signed with a different key from the APK. It archives a dirty tree as
+`v<version>-dirty-g<commit>/`, and never replaces an existing archive without
+`--force`. Bump `versionCode` and `versionName` in `app/build.gradle.kts` for each
+release.
 
 - **Signing.** The app uses Play App Signing: Google holds the key that signs what
   users install, and `keystore.properties` points at the _upload_ key. A lost
