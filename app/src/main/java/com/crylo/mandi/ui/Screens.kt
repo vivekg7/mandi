@@ -34,6 +34,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,14 +59,30 @@ import com.crylo.mandi.core.SeriesKey
 
 @Composable
 fun MandiApp(vm: MandiViewModel) {
-    when (val screen = vm.backStack.last()) {
-        Screen.Home -> HomeScreen(vm)
-        Screen.States -> StatesScreen(vm)
-        is Screen.Districts -> DistrictsScreen(vm, screen.slug)
-        is Screen.Markets -> MarketsScreen(vm, screen.slug, screen.district)
-        is Screen.Market -> MarketScreen(vm, screen)
-        Screen.Search -> SearchScreen(vm)
-        is Screen.Detail -> DetailScreen(vm, screen.key)
+    // Only the top screen is composed, so without this every list would be rebuilt at
+    // the top on Back. Each back-stack entry keeps its own saved state (scroll position
+    // and the like) under a key that includes its depth, so the same screen reached
+    // twice by different routes does not share one, and a popped entry's state is
+    // dropped rather than resurfacing the next time that screen is opened.
+    val holder = rememberSaveableStateHolder()
+    val keys = vm.backStack.mapIndexed { depth, screen -> "$depth/$screen" }
+    val saved = remember { mutableSetOf<String>() }
+    LaunchedEffect(keys) {
+        (saved - keys.toSet()).forEach(holder::removeState)
+        saved.retainAll(keys.toSet())
+        saved += keys.last()
+    }
+    val screen = vm.backStack.last()
+    holder.SaveableStateProvider(keys.last()) {
+        when (screen) {
+            Screen.Home -> HomeScreen(vm)
+            Screen.States -> StatesScreen(vm)
+            is Screen.Districts -> DistrictsScreen(vm, screen.slug)
+            is Screen.Markets -> MarketsScreen(vm, screen.slug, screen.district)
+            is Screen.Market -> MarketScreen(vm, screen)
+            Screen.Search -> SearchScreen(vm)
+            is Screen.Detail -> DetailScreen(vm, screen.key)
+        }
     }
 }
 
@@ -311,7 +331,14 @@ private fun MarketScreen(vm: MandiViewModel, screen: Screen.Market) {
 @Composable
 private fun SearchScreen(vm: MandiViewModel) {
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    // Open the keyboard on the way in, not again on coming back from a result.
+    var focused by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (!focused) {
+            focused = true
+            focus.requestFocus()
+        }
+    }
     Scaffold(topBar = { MandiTopBar(stringResource(R.string.search_title), onBack = { vm.back() }) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             OutlinedTextField(
@@ -349,7 +376,14 @@ private fun SearchScreen(vm: MandiViewModel) {
                     if (atTop) listState.requestScrollToItem(0)
                 }
             }
-            LaunchedEffect(vm.query) { listState.scrollToItem(0) }
+            // A new query starts at the top; coming back from a result keeps the place.
+            var scrolledFor by rememberSaveable { mutableStateOf(vm.query) }
+            LaunchedEffect(vm.query) {
+                if (vm.query != scrolledFor) {
+                    scrolledFor = vm.query
+                    listState.scrollToItem(0)
+                }
+            }
             LazyColumn(Modifier.fillMaxSize(), state = listState) {
                 if (vm.query.trim().length >= 2 && results.isEmpty() && !vm.searchLoading) {
                     item { Message(stringResource(R.string.no_results), null) {} }
