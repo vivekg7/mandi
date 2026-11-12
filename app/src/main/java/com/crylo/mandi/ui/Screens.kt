@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,7 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import com.crylo.mandi.R
 import com.crylo.mandi.core.Money
-import com.crylo.mandi.core.PriceRow
+import com.crylo.mandi.core.Search
+import com.crylo.mandi.core.SearchResult
+import com.crylo.mandi.core.StateMatches
 import com.crylo.mandi.core.SeriesKey
 
 @Composable
@@ -363,7 +367,10 @@ private fun SearchScreen(vm: MandiViewModel) {
             val atTop by remember {
                 derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
             }
-            val results = remember(vm.query, vm.states.size, vm.index) { vm.searchResults() }
+            val results = remember(vm.query, vm.states.size, vm.index, vm.searchState, vm.searchLimit) {
+                vm.searchResults()
+            }
+            if (vm.query.trim().length >= Search.MIN_QUERY) StateChips(vm, results)
             // States load one by one after the first keystrokes, and results are sorted by
             // state, so new rows usually land above the first visible one. A keyed list
             // holds that row in place, which opened the results mid-list with no hint that
@@ -376,30 +383,76 @@ private fun SearchScreen(vm: MandiViewModel) {
                     if (atTop) listState.requestScrollToItem(0)
                 }
             }
-            // A new query starts at the top; coming back from a result keeps the place.
-            var scrolledFor by rememberSaveable { mutableStateOf(vm.query) }
-            LaunchedEffect(vm.query) {
-                if (vm.query != scrolledFor) {
-                    scrolledFor = vm.query
+            // A new query or state starts at the top; coming back from a result keeps the place.
+            val scope = "${vm.query.trim()}/${vm.searchState}"
+            var scrolledFor by rememberSaveable { mutableStateOf(scope) }
+            LaunchedEffect(scope) {
+                if (scope != scrolledFor) {
+                    scrolledFor = scope
                     listState.scrollToItem(0)
                 }
             }
             LazyColumn(Modifier.fillMaxSize(), state = listState) {
-                if (vm.query.trim().length >= 2 && results.isEmpty() && !vm.searchLoading) {
-                    item { Message(stringResource(R.string.no_results), null) {} }
+                if (vm.query.trim().length >= Search.MIN_QUERY && results.rows.isEmpty() && !vm.searchLoading) {
+                    item {
+                        val text = vm.searchState?.let { stringResource(R.string.no_results_in_state, vm.stateName(it)) }
+                            ?: stringResource(R.string.no_results)
+                        Message(text, null) {}
+                    }
                 }
-                items(results, key = { it.key.encode() }) { row ->
+                items(results.rows, key = { it.key.encode() }) { row ->
                     PriceRowItem(row, showPlace = true) { vm.navigate(Screen.Detail(row.key)) }
                     HorizontalDivider()
+                }
+                if (results.rows.size < results.total) {
+                    item {
+                        Message(
+                            stringResource(R.string.search_showing, results.rows.size, results.total),
+                            stringResource(R.string.search_show_more),
+                            vm::showMoreResults,
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * All India, then the user's home state, then every state with a match, most first,
+ * each with its number of matches. A chosen state with no match keeps its chip, so
+ * the filter that emptied the list stays visible and can be undone.
+ */
+@Composable
+private fun StateChips(vm: MandiViewModel, results: SearchResult) {
+    val counts = results.perState.associateBy { it.slug }
+    val pinned = listOfNotNull(vm.homeState(), vm.searchState).distinct()
+        .map { counts[it] ?: StateMatches(it, vm.stateName(it), 0) }
+    val chips = pinned + results.perState.filter { it.slug !in pinned.map(StateMatches::slug) }
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item(key = "") {
+            FilterChip(
+                selected = vm.searchState == null,
+                onClick = { vm.pickSearchState(null) },
+                label = { Text(stringResource(R.string.search_chip, stringResource(R.string.all_india), results.allIndia)) },
+            )
+        }
+        items(chips, key = { it.slug }) { chip ->
+            FilterChip(
+                selected = vm.searchState == chip.slug,
+                onClick = { vm.pickSearchState(chip.slug) },
+                label = { Text(stringResource(R.string.search_chip, chip.name, chip.count)) },
+            )
+        }
+    }
+}
+
 /** The result list the search screen last kept at the top; not state, just a marker. */
 private class PinnedResults {
-    var results: List<PriceRow>? = null
+    var results: SearchResult? = null
 }
 
 @Composable

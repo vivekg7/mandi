@@ -21,6 +21,11 @@
     <string name="search_title">Search</string>
     <string name="search_hint">Commodity, e.g. Onion or प्याज</string>
     <string name="no_results">No market reported this commodity in the last 7 days.</string>
+    <string name="no_results_in_state">No market in %1$s reported this commodity in the last 7 days.</string>
+    <string name="all_india">All India</string>
+    <string name="search_chip">%1$s · %2$d</string>
+    <string name="search_showing">Showing %1$d of %2$d</string>
+    <string name="search_show_more">Show more</string>
 
     <string name="per_quintal">%1$s/qtl</string>
     <string name="per_kg">%1$s/kg</string>

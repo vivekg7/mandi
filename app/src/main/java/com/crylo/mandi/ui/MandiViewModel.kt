@@ -2,15 +2,17 @@ package com.crylo.mandi.ui
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.crylo.mandi.core.CommodityNames
 import com.crylo.mandi.core.MandiIndex
 import com.crylo.mandi.core.PriceRow
+import com.crylo.mandi.core.Search
+import com.crylo.mandi.core.SearchResult
 import com.crylo.mandi.core.SeriesKey
 import com.crylo.mandi.core.StateData
 import com.crylo.mandi.core.StateHistory
@@ -60,6 +62,16 @@ class MandiViewModel(app: Application) : AndroidViewModel(app) {
     var searchLoading by mutableStateOf(false)
         private set
 
+    /** The state search is narrowed to, by slug; `null` is all India. */
+    var searchState by mutableStateOf<String?>(null)
+        private set
+
+    /** Once the user picks a chip, stop choosing a state for them. */
+    private var searchStatePicked = false
+
+    var searchLimit by mutableIntStateOf(SEARCH_PAGE)
+        private set
+
     init {
         viewModelScope.launch {
             // Show the saved copy straight away, then refresh over it.
@@ -78,7 +90,10 @@ class MandiViewModel(app: Application) : AndroidViewModel(app) {
                 ensureState(screen.key.stateSlug)
                 ensureHistory(screen.key.stateSlug)
             }
-            Screen.Search -> if (query.isNotBlank()) loadAllStates()
+            Screen.Search -> {
+                if (!searchStatePicked) searchState = homeState()
+                if (query.isNotBlank()) loadAllStates()
+            }
             else -> Unit
         }
     }
@@ -172,6 +187,7 @@ class MandiViewModel(app: Application) : AndroidViewModel(app) {
     fun historyDays(key: SeriesKey) = histories[key.stateSlug]?.days.orEmpty()
 
     fun updateQuery(text: String) {
+        if (text.trim() != query.trim()) searchLimit = SEARCH_PAGE
         query = text
         if (text.isNotBlank()) loadAllStates()
     }
@@ -191,23 +207,31 @@ class MandiViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun searchResults(): List<PriceRow> {
-        val q = query.trim()
-        if (q.length < 2) return emptyList()
-        return states.values.asSequence()
-            .flatMap { it.rows.asSequence() }
-            .filter { CommodityNames.matches(it.key.commodity, q) }
-            .sortedWith(
-                compareBy<PriceRow>({ it.key.commodity })
-                    .thenByDescending { it.arrival }
-                    .thenBy { it.key.state }
-                    .thenBy { it.key.market },
-            )
-            .take(SEARCH_LIMIT)
-            .toList()
+    fun searchResults(): SearchResult =
+        Search.run(states.values.asSequence().flatMap { it.rows.asSequence() }, query, searchState, searchLimit)
+
+    fun pickSearchState(slug: String?) {
+        searchStatePicked = true
+        searchState = slug
+        searchLimit = SEARCH_PAGE
     }
 
+    fun showMoreResults() {
+        searchLimit += SEARCH_PAGE
+    }
+
+    /**
+     * The state most of the favourites are in, taken as where the user is. Most people
+     * follow their own area's markets, and without a filter they would scroll past
+     * hundreds of Tamil Nadu rows to reach them.
+     */
+    fun homeState(): String? = favourites.groupingBy { it.stateSlug }.eachCount().maxByOrNull { it.value }?.key
+
+    /** Display name for a state slug, for a chosen state that has no matches. */
+    fun stateName(slug: String): String =
+        index?.states?.firstOrNull { it.slug == slug }?.name ?: states[slug]?.name ?: slug
+
     private companion object {
-        const val SEARCH_LIMIT = 300
+        const val SEARCH_PAGE = 300
     }
 }

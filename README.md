@@ -13,7 +13,8 @@ open source (MIT), and has **no ads, no tracking, no analytics and no account**.
 - Browse state → district → market and see every commodity that market reported,
   with min, max and modal price.
 - Search a commodity across all markets in India, in English or Hindi
-  (`onion` or `प्याज`).
+  (`onion` or `प्याज`), narrowed to one state with a tap. Search starts in the
+  state most of your starred prices are in.
 - Favourites (a commodity, variety and grade at a market) on the home screen with
   today's modal price and the change against the previous reported day.
 - Prices per quintal and per kg.
@@ -148,6 +149,13 @@ For a signed release, create `keystore.properties` (git-ignored) next to
   just those files on disk. Favourites are a string set in SharedPreferences.
 - **Search is all-India.** It downloads every state's file once (they are small
   and cached until the next pipeline run).
+- **Search filters by state before it limits.** Results come 300 at a time, with
+  "Showing 300 of N" and a button for more. Tamil Nadu reports more than half the
+  rows for common vegetables, so a plain limit over the all-India list used to
+  drop whole states without saying so, and left everyone else scrolling past
+  Tamil Nadu to reach their own markets. No district filter: within one state a
+  commodity rarely has more than a few dozen rows, and each row names its
+  district.
 - **Refusing unknown formats.** Every file carries a format version. An older app
   shows its cached data rather than misread a newer layout.
 
