@@ -48,7 +48,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -150,16 +156,7 @@ private fun HomeScreen(vm: MandiViewModel) {
                     items(vm.favourites.toList(), key = { it.encode() }) { key ->
                         FavouriteCard(vm, key)
                     }
-                    if (vm.favourites.isNotEmpty()) {
-                        item {
-                            Text(
-                                stringResource(R.string.unit_note),
-                                modifier = Modifier.padding(16.dp),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    item { SourceNote(Modifier.padding(16.dp)) }
                 }
             }
         }
@@ -232,6 +229,35 @@ private fun FavouriteCard(vm: MandiViewModel, key: SeriesKey) {
             }
         }
     }
+}
+
+private const val SOURCE_URL =
+    "https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi"
+
+/**
+ * Units, the data source and the disclaimer, under every list of prices. Google Play
+ * requires an app that presents government information to say in the app itself that it
+ * is not a government app, and to link the source, so the home screen shows this even
+ * before anything is starred.
+ */
+@Composable
+private fun SourceNote(modifier: Modifier = Modifier) {
+    val linkStyle = TextLinkStyles(
+        SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline),
+    )
+    val text = buildAnnotatedString {
+        append(stringResource(R.string.unit_note))
+        append("\n\n")
+        append(stringResource(R.string.not_affiliated))
+        append(" ")
+        withLink(LinkAnnotation.Url(SOURCE_URL, linkStyle)) { append(stringResource(R.string.source_link)) }
+    }
+    Text(
+        text,
+        modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
@@ -321,14 +347,7 @@ private fun MarketScreen(vm: MandiViewModel, screen: Screen.Market) {
             PriceRowItem(row, showPlace = false) { vm.navigate(Screen.Detail(row.key)) }
             HorizontalDivider()
         }
-        item {
-            Text(
-                stringResource(R.string.unit_note),
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        item { SourceNote(Modifier.padding(16.dp)) }
     }
 }
 
@@ -537,13 +556,7 @@ private fun DetailScreen(vm: MandiViewModel, key: SeriesKey) {
                     }
                 }
             }
-            item {
-                Text(
-                    stringResource(R.string.unit_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            item { SourceNote() }
         }
     }
 }

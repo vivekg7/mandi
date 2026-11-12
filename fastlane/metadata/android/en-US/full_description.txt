@@ -3,7 +3,7 @@ Daily wholesale (APMC mandi) crop prices from markets across India, from the gov
 <b>Features</b>
 <ul>
 <li>Browse by state, district and market, with min, max and modal price for every commodity the market reported</li>
-<li>Search a commodity across all markets in India, in English or Hindi</li>
+<li>Search a commodity across all markets in India, in English or Hindi, and narrow it to one state</li>
 <li>Favourites on the home screen with today's price and the change since the previous report</li>
 <li>Price per quintal and per kg</li>
 <li>30-day trend line</li>
@@ -17,3 +17,8 @@ Daily wholesale (APMC mandi) crop prices from markets across India, from the gov
 No ads, no analytics, no tracking, no account. The only network access is downloading the published price files from GitHub. Your favourites stay on your device.
 
 Prices are updated four times a day by an open-source scheduled job that reads the data.gov.in API, so the app itself needs no API key.
+
+<b>Source and disclaimer</b>
+Mandi is an independent, open-source app. It is not affiliated with or endorsed by the Government of India, Agmarknet or data.gov.in, and it does not offer any government service.
+Data source: "Current Daily Price of Various Commodities from Various Markets (Mandi)" on the Open Government Data Platform India, https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi, used under the Government Open Data License – India.
+Source code: https://github.com/vivekg7/mandi

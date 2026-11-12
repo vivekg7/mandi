@@ -16,6 +16,8 @@
     <string name="no_favourites">Star a commodity at a market to see its price here every day.</string>
     <string name="no_recent_report">No report in the last 7 days</string>
     <string name="unit_note">Prices are in rupees per quintal (100 kg) as reported by each market to Agmarknet, published on data.gov.in. Modal is the price most trade happened at.</string>
+    <string name="not_affiliated">Mandi is an independent, open-source app. It is not affiliated with or endorsed by the Government of India, Agmarknet or data.gov.in.</string>
+    <string name="source_link">Source: data.gov.in</string>
 
     <string name="choose_state">Choose state</string>
     <string name="search_title">Search</string>

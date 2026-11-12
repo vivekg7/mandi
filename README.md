@@ -135,6 +135,30 @@ For a signed release, create `keystore.properties` (git-ignored) next to
 `settings.gradle.kts` with `storeFile`, `storePassword`, `keyAlias` and
 `keyPassword`.
 
+## Releasing on Google Play
+
+```sh
+./gradlew lintRelease testDebugUnitTest bundleRelease
+# app/build/outputs/bundle/release/app-release.aab
+```
+
+- **Signing.** The app uses Play App Signing: Google holds the key that signs what
+  users install, and `keystore.properties` points at the _upload_ key. A lost
+  upload key can be reset from the Play Console. A lost app signing key could not
+  be, which is why Google keeps it. The R8 mapping file is inside the bundle, so
+  Play deobfuscates crash reports without a separate upload.
+- **Store listing.** Text, icon, feature graphic and screenshots are in
+  [`fastlane/metadata/android/en-US/`](fastlane/metadata/android/en-US). F-Droid
+  reads the same layout. Bump `versionCode` and add
+  `changelogs/<versionCode>.txt` for every release.
+- **Screenshots** must be no taller than 2:1. Most current phones are taller, so
+  take them with the emulator's display set to `adb shell wm size 1080x2160`, and
+  run `adb shell wm size reset` afterwards.
+- **Not a government app.** Play requires an app that shows government data to say,
+  in the app and in the listing, that it is not affiliated with the government, and
+  to link the source. The note under every price list does this. Keep it if that
+  screen is reworked.
+
 ## Design notes
 
 - **Pure Kotlin core.** JSON parsing, rupee formatting with Indian digit grouping,
