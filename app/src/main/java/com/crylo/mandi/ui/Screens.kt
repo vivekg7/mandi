@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,6 +31,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -327,8 +330,18 @@ private fun SearchScreen(vm: MandiViewModel) {
             )
             Spacer(Modifier.height(8.dp))
             if (vm.searchLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            val listState = rememberLazyListState()
+            val atTop by remember {
+                derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+            }
             val results = remember(vm.query, vm.states.size, vm.index) { vm.searchResults() }
-            LazyColumn(Modifier.fillMaxSize()) {
+            // States load one by one after the first keystrokes, and results are sorted by
+            // state, so new rows usually land above the first visible one. A keyed list
+            // holds that row in place, which opened the results mid-list with no hint that
+            // anything sat above. Stay pinned to the top unless the user has scrolled away.
+            remember(results) { if (atTop) listState.requestScrollToItem(0) }
+            LaunchedEffect(vm.query) { listState.scrollToItem(0) }
+            LazyColumn(Modifier.fillMaxSize(), state = listState) {
                 if (vm.query.trim().length >= 2 && results.isEmpty() && !vm.searchLoading) {
                     item { Message(stringResource(R.string.no_results), null) {} }
                 }
