@@ -43,8 +43,8 @@
     <string name="change_none">No change</string>
     <string name="change_unknown">No earlier price</string>
 
-    <string name="add_favourite">Add to home screen</string>
-    <string name="remove_favourite">Remove from home screen</string>
+    <string name="add_favourite">Star</string>
+    <string name="remove_favourite">Remove star</string>
 
     <string name="trend_title">Last 30 days</string>
     <string name="trend_description">Modal price trend</string>
